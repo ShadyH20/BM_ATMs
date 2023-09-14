@@ -552,10 +552,15 @@ class _MapScreenState extends State<MapScreen> {
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
-              Icon(
-                Icons.location_on,
-                color: bmRed,
-                size: 45,
+              AnimatedScale(
+                alignment: Alignment.bottomRight,
+                duration: const Duration(milliseconds: 300),
+                scale: focused == i ? 1.15 : 1,
+                child: Icon(
+                  Icons.location_on,
+                  color: bmRed,
+                  size: 45,
+                ),
               ),
 
               // Info
