@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:routesapp/main.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Color bmYellow = const Color(0xffe5aa00);
 Color bmRed = const Color(0xff871e35);
@@ -115,54 +116,50 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // Container containing a choice chip to select the type of service the user wants from: withdrawal, deposit, and currency exchange
 
-          Expanded(
-            // height: MediaQuery.of(context).size.height * 0.8,
-            child: FlutterMap(
-              mapController: mapController,
-              options: MapOptions(
-                zoom: 15,
-                center: const LatLng(30.0188, 31.4293),
-              ),
-              children: [
-                // Layer that adds the map
-                TileLayer(
-                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-                ),
-                // Layer that adds points the map
-                MarkerLayer(
-                  markers: [
-                        Marker(
-                          point: _currentPosition == null
-                              ? const LatLng(0, 0)
-                              : LatLng(_currentPosition!.latitude,
-                                  _currentPosition!.longitude),
-                          width: 80,
-                          height: 80,
-                          builder: (context) => IconButton(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.my_location,
-                              size: 30,
-                            ),
-                            color: Colors.blue,
-                            iconSize: 45,
-                          ),
-                        ),
-                      ] +
-                      atmMarkers,
-                ),
-
-                // Polylines layer
-                PolylineLayer(
-                  polylineCulling: false,
-                  polylines: [
-                    Polyline(
-                        points: points, color: Colors.black, strokeWidth: 5),
-                  ],
-                ),
-              ],
+          FlutterMap(
+            mapController: mapController,
+            options: MapOptions(
+              zoom: 15,
+              center: const LatLng(30.0188, 31.4293),
             ),
+            children: [
+              // Layer that adds the map
+              TileLayer(
+                urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+              ),
+              // Layer that adds points the map
+              MarkerLayer(
+                markers: [
+                      Marker(
+                        point: _currentPosition == null
+                            ? const LatLng(0, 0)
+                            : LatLng(_currentPosition!.latitude,
+                                _currentPosition!.longitude),
+                        width: 80,
+                        height: 80,
+                        builder: (context) => IconButton(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.my_location,
+                            size: 30,
+                          ),
+                          color: Colors.blue,
+                          iconSize: 45,
+                        ),
+                      ),
+                    ] +
+                    atmMarkers,
+              ),
+
+              // Polylines layer
+              PolylineLayer(
+                polylineCulling: false,
+                polylines: [
+                  Polyline(points: points, color: Colors.black, strokeWidth: 5),
+                ],
+              ),
+            ],
           ),
 
           Positioned(
@@ -335,6 +332,42 @@ class _MapScreenState extends State<MapScreen> {
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          // Floating action button to show next atm info
+          FloatingActionButton(
+              backgroundColor: bmRed,
+              onPressed: () {
+                setState(() {
+                  focused = focused == 4 ? 0 : focused + 1;
+                });
+              },
+              child: const Text("Next", style: TextStyle(fontSize: 10))),
+          SizedBox(height: 10),
+
+          // Floating action button to get google maps directions
+          FloatingActionButton(
+            backgroundColor: bmRed,
+            onPressed: () async {
+              if (focused == -1) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text(
+                        'Please search for the nearest atm before getting directions'),
+                    backgroundColor: Color(0xff2e2e2e)));
+                return;
+              }
+              // redirect to google maps with directiona to the atm location
+              final Uri url = Uri.parse(
+                  "https://www.google.com/maps/dir/?api=1&origin=${_currentPosition!.latitude},${_currentPosition!.longitude}&destination=${atmMarkers[focused].point.latitude},${atmMarkers[focused].point.longitude}&travelmode=driving");
+              // redirect
+              if (!await launchUrl(url)) {
+                throw Exception('Could not launch $url');
+              }
+            },
+            child: const Icon(
+              Icons.directions,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 10),
           // Floating action button to get the user's location
           FloatingActionButton(
             backgroundColor: bmRed,
@@ -406,6 +439,8 @@ class _MapScreenState extends State<MapScreen> {
     return true;
   }
 
+  int focused = -1;
+
   var loadingNearestAtm = false;
   getNearestAtm() async {
     // Check if the user has selected a service
@@ -436,20 +471,20 @@ class _MapScreenState extends State<MapScreen> {
             ? atmLocations.sublist(451, 806)
             : atmLocations.sublist(2294, 2402);
 
-    print(locs);
-    print(locs[1]);
+    // print(locs);
+    // print(locs[1]);
 
     // generate lsit locations where each location is a list of [long, lat] of the atm (long and lat are doubles)
     List<dynamic> locations = [];
 
     // get type of locs[1][5]
-    print(locs[1][5].runtimeType);
+    // print(locs[1][5].runtimeType);
     for (var loc in locs) {
       locations.add([loc[5], loc[4]]);
     }
 
-    print("LOCATIONS");
-    print(locations);
+    // print("LOCATIONS");
+    // print(locations);
 
     setState(() {
       loadingNearestAtm = true;
@@ -457,16 +492,16 @@ class _MapScreenState extends State<MapScreen> {
 
     // Call the api
     var res = await getDistanceMatrixUrl(userLoc, locations);
-    print("RESPONSE");
-    print(res);
+    // print("RESPONSE");
+    // print(res);
 
     setState(() {
       loadingNearestAtm = false;
     });
 
     var resBody = jsonDecode(res.body);
-    print("RESPONSE BODY");
-    print(resBody);
+    // print("RESPONSE BODY");
+    // print(resBody);
 
     // Get durations
     var leastDuration = resBody['durations'];
@@ -478,11 +513,11 @@ class _MapScreenState extends State<MapScreen> {
     var sources = resBody['sources'];
 
     // pront
-    print("Nearest ATM by time is: ");
-    print(leastDuration);
+    // print("Nearest ATM by time is: ");
+    // print(leastDuration);
 
-    print("Nearest ATM by distance is: ");
-    print(leastDistance);
+    // print("Nearest ATM by distance is: ");
+    // print(leastDistance);
 
     // Link the leastDistance array with the sources array
     var leastDistanceWithSources = [];
@@ -491,14 +526,14 @@ class _MapScreenState extends State<MapScreen> {
           [leastDistance[i][0], leastDuration[i][0], sources[i]["location"]]);
     }
 
-    print("BEFORE SORTING");
-    print(leastDistanceWithSources);
+    // print("BEFORE SORTING");
+    // print(leastDistanceWithSources);
     // Sort the leastDistanceWithSources array
     leastDistanceWithSources.sort((a, b) => a[0].compareTo(b[0]));
 
-    print("\n\n");
-    print("AFTER SORTING");
-    print(leastDistanceWithSources);
+    // print("\n\n");
+    // print("AFTER SORTING");
+    // print(leastDistanceWithSources);
 
     leastDistanceWithSources = leastDistanceWithSources.sublist(1);
 
@@ -512,110 +547,84 @@ class _MapScreenState extends State<MapScreen> {
               leastDistanceWithSources[i][2][0]),
           // width: 0,
           // height: 0,
-          builder: (ctx) => GestureDetector(
-            onTap: () {
-              // Show additional information when marker is tapped
-              showDialog(
-                context: ctx,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Marker Information'),
-                    content: const Text(
-                        'Additional info here...'), // Add your info here
-                    actions: <Widget>[
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: GestureDetector(
-              onTap: () {
-                print(
-                    "Tapped on ATM ${leastDistanceWithSources[i][2][1]}, ${leastDistanceWithSources[i][2][0]}");
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    color: bmRed,
-                    size: 45,
-                  ),
 
-                  // Info
-                  Positioned(
-                    top: -37,
-                    child: Container(
-                      // width: 120,
-                      // height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    color: bmRed,
-                                    size: 15,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    "${leastDistanceWithSources[i][0].toStringAsFixed(0)} m away",
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+          builder: (ctx) => Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.location_on,
+                color: bmRed,
+                size: 45,
+              ),
+
+              // Info
+              focused == i
+                  ? Positioned(
+                      top: -37,
+                      child: Container(
+                        // width: 120,
+                        // height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      color: bmRed,
+                                      size: 15,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.timer,
-                                    color: bmRed,
-                                    size: 15,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    "${(leastDistanceWithSources[i][1] / 60).toStringAsFixed(0)} min away",
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      "${leastDistanceWithSources[i][0].toStringAsFixed(0)} m away",
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.timer,
+                                      color: bmRed,
+                                      size: 15,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      "${(leastDistanceWithSources[i][1] / 60).toStringAsFixed(0)} min away",
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )
-                ],
-              ),
-            ),
+                    )
+                  : const SizedBox.shrink(),
+            ],
           ),
         ),
       );
