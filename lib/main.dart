@@ -27,17 +27,31 @@ class MyApp extends StatelessWidget {
     "Latitude": 4,
     "Longitude": 5,
     "Description": 6
-  }
+  };
 
-      // "Governate": 1;"Area": 1 "Name": 1;"ATM": 1; "Name","Latitude","Longitude","Description"}
-
-      ;
+  // MaterialApp(
+//             builder: (context, child) {
+//               return MediaQuery(
+//                 data: MediaQuery.of(context).copyWith(
+//                   textScaleFactor: 1.0,
+//                 ),
+//                 child: child!,
+//               );
+//             },
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaleFactor: 1.0,
+          ),
+          child: child!,
+        );
+      },
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

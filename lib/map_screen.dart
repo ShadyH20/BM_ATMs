@@ -231,63 +231,74 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 8),
 
                   // CHIPS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    alignment: WrapAlignment.center,
+                    spacing: 5,
+
+                    // alignment: WrapAlignment.spaceEvenly,
+                    // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ChoiceChip(
-                        label: chipLabel(items[0]),
-                        selected: selectedServices.contains('withdrawal'),
-                        shape: const StadiumBorder(
-                          side: BorderSide(color: Colors.black54),
+                      FittedBox(
+                        child: ChoiceChip(
+                          label: chipLabel(items[0]),
+                          selected: selectedServices.contains('withdrawal'),
+                          shape: const StadiumBorder(
+                            side: BorderSide(color: Colors.black54),
+                          ),
+                          backgroundColor: Colors.white,
+                          selectedColor: bmYellow,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (!selected) {
+                                selectedServices.remove('withdrawal');
+                              } else {
+                                selectedServices.add('withdrawal');
+                              }
+                            });
+                          },
                         ),
-                        backgroundColor: Colors.white,
-                        selectedColor: bmYellow,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (!selected) {
-                              selectedServices.remove('withdrawal');
-                            } else {
-                              selectedServices.add('withdrawal');
-                            }
-                          });
-                        },
                       ),
-                      ChoiceChip(
-                        label: chipLabel(items[1]),
-                        selected: selectedServices.contains('deposit'),
-                        shape: const StadiumBorder(
-                          side: BorderSide(color: Colors.black54),
+                      FittedBox(
+                        child: ChoiceChip(
+                          label: chipLabel(items[1]),
+                          selected: selectedServices.contains('deposit'),
+                          shape: const StadiumBorder(
+                            side: BorderSide(color: Colors.black54),
+                          ),
+                          backgroundColor: Colors.white,
+                          selectedColor: bmYellow,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (!selected) {
+                                selectedServices.remove('deposit');
+                              } else {
+                                selectedServices.add('deposit');
+                              }
+                            });
+                          },
                         ),
-                        backgroundColor: Colors.white,
-                        selectedColor: bmYellow,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (!selected) {
-                              selectedServices.remove('deposit');
-                            } else {
-                              selectedServices.add('deposit');
-                            }
-                          });
-                        },
                       ),
-                      ChoiceChip(
-                        label: chipLabel(items[2]),
-                        selected:
-                            selectedServices.contains('currency_exchange'),
-                        shape: const StadiumBorder(
-                          side: BorderSide(color: Colors.black54),
+                      FittedBox(
+                        child: ChoiceChip(
+                          label: chipLabel(items[2]),
+                          selected:
+                              selectedServices.contains('currency_exchange'),
+                          shape: const StadiumBorder(
+                            side: BorderSide(color: Colors.black54),
+                          ),
+                          backgroundColor: Colors.white,
+                          selectedColor: bmYellow,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (!selected) {
+                                selectedServices.remove('currency_exchange');
+                              } else {
+                                selectedServices.add('currency_exchange');
+                              }
+                            });
+                          },
                         ),
-                        backgroundColor: Colors.white,
-                        selectedColor: bmYellow,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (!selected) {
-                              selectedServices.remove('currency_exchange');
-                            } else {
-                              selectedServices.add('currency_exchange');
-                            }
-                          });
-                        },
                       ),
                     ],
                   ),
