@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:multi_select_flutter/chip_field/multi_select_chip_field.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:routesapp/api.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:routesapp/main.dart';
+
+Color bmYellow = const Color(0xffe5aa00);
+Color bmRed = const Color(0xff871e35);
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -70,65 +75,249 @@ class _MapScreenState extends State<MapScreen> {
     _getCurrentPosition();
   }
 
+  // Store service type
+  List<dynamic> selectedServices = ["withdrawal"];
+
+  List<MultiSelectItem<Object?>> items = [
+    MultiSelectItem("withdrawal", "Withdrawal"),
+    MultiSelectItem("deposit", "Deposit"),
+    MultiSelectItem("currency_exchange", "Currency Exchange"),
+  ];
+
+  chipLabel(MultiSelectItem item) => Row(
+      children: <Widget>[
+            Text(item.label.toString(),
+                style: TextStyle(
+                    color: selectedServices.contains(item.value)
+                        ? Colors.white
+                        : Colors.black)),
+          ] +
+          (selectedServices.contains(item.value)
+              ? const <Widget>[
+                  SizedBox(width: 2),
+                  Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Colors.white,
+                  )
+                ]
+              : []));
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FlutterMap(
-        mapController: mapController,
-        options: MapOptions(
-          zoom: 15,
-          center: const LatLng(6.131015, 1.223898),
-        ),
+      appBar: AppBar(
+        title: const Text("ATM Locator"),
+        backgroundColor: bmRed,
+        centerTitle: true,
+      ),
+      body: Stack(
         children: [
-          // Layer that adds the map
-          TileLayer(
-            urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-          ),
-          // Layer that adds points the map
-          MarkerLayer(
-            markers: [
-                  // First Marker
-                  // Marker(
-                  //   anchorPos: AnchorPos.align(AnchorAlign.top),
+          // Container containing a choice chip to select the type of service the user wants from: withdrawal, deposit, and currency exchange
 
-                  //   point: LatLng(30.018734, 31.43009),
-                  //   // width: 80,
-                  //   // height: 80,
-                  //   builder: (context) => IconButton(
-                  //     onPressed: () {},
-                  //     icon: const Icon(Icons.location_on),
-                  //     color: Colors.green,
-                  //     iconSize: 100,
-                  //   ),
-                  // ),
-                  Marker(
-                    point: _currentPosition == null
-                        ? const LatLng(0, 0)
-                        : LatLng(_currentPosition!.latitude,
-                            _currentPosition!.longitude),
-                    width: 80,
-                    height: 80,
-                    builder: (context) => IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.my_location,
-                        size: 30,
-                      ),
-                      color: Colors.blue,
-                      iconSize: 45,
+          Expanded(
+            // height: MediaQuery.of(context).size.height * 0.8,
+            child: FlutterMap(
+              mapController: mapController,
+              options: MapOptions(
+                zoom: 15,
+                center: const LatLng(30.0188, 31.4293),
+              ),
+              children: [
+                // Layer that adds the map
+                TileLayer(
+                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+                ),
+                // Layer that adds points the map
+                MarkerLayer(
+                  markers: [
+                        Marker(
+                          point: _currentPosition == null
+                              ? const LatLng(0, 0)
+                              : LatLng(_currentPosition!.latitude,
+                                  _currentPosition!.longitude),
+                          width: 80,
+                          height: 80,
+                          builder: (context) => IconButton(
+                            onPressed: () {},
+                            icon: const Icon(
+                              Icons.my_location,
+                              size: 30,
+                            ),
+                            color: Colors.blue,
+                            iconSize: 45,
+                          ),
+                        ),
+                      ] +
+                      atmMarkers,
+                ),
+
+                // Polylines layer
+                PolylineLayer(
+                  polylineCulling: false,
+                  polylines: [
+                    Polyline(
+                        points: points, color: Colors.black, strokeWidth: 5),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              width: MediaQuery.of(context).size.width,
+              // color: Colors.grey[200],
+              // Blurred background
+              decoration: BoxDecoration(
+                // white bottom border
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.9),
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.9),
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // TEXT
+                  const Text(
+                    "Select the type of service you want",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ] +
-                atmMarkers,
-          ),
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: MultiSelectChipField(
+                  //     items: items,
+                  //     onTap: (values) {
+                  //       selectedServices = values;
+                  //     },
+                  //     initialValue: const ['withdrawal'],
+                  //     textStyle: const TextStyle(
+                  //       color: Colors.black,
+                  //       fontSize: 13,
+                  //     ),
+                  //     selectedTextStyle: const TextStyle(
+                  //       // color: Colors.white,
+                  //       fontSize: 18,
+                  //     ),
+                  //     selectedChipColor: bmYellow,
+                  //     // chipWidth: MediaQuery.of(context).size.width * 0.,
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.grey,
+                  //       border: Border.all(
+                  //         color: Colors.transparent,
+                  //       ),
+                  //     ),
+                  //     showHeader: false,
+                  //     title: const Text("Services"),
+                  //   ),
+                  // ),
+                  const SizedBox(height: 8),
 
-          // Polylines layer
-          PolylineLayer(
-            polylineCulling: false,
-            polylines: [
-              Polyline(points: points, color: Colors.black, strokeWidth: 5),
-            ],
+                  // CHIPS
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ChoiceChip(
+                        label: chipLabel(items[0]),
+                        selected: selectedServices.contains('withdrawal'),
+                        shape: const StadiumBorder(
+                          side: BorderSide(color: Colors.black54),
+                        ),
+                        backgroundColor: Colors.white,
+                        selectedColor: bmYellow,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (!selected) {
+                              selectedServices.remove('withdrawal');
+                            } else {
+                              selectedServices.add('withdrawal');
+                            }
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        label: chipLabel(items[1]),
+                        selected: selectedServices.contains('deposit'),
+                        shape: const StadiumBorder(
+                          side: BorderSide(color: Colors.black54),
+                        ),
+                        backgroundColor: Colors.white,
+                        selectedColor: bmYellow,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (!selected) {
+                              selectedServices.remove('deposit');
+                            } else {
+                              selectedServices.add('deposit');
+                            }
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        label: chipLabel(items[2]),
+                        selected:
+                            selectedServices.contains('currency_exchange'),
+                        shape: const StadiumBorder(
+                          side: BorderSide(color: Colors.black54),
+                        ),
+                        backgroundColor: Colors.white,
+                        selectedColor: bmYellow,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (!selected) {
+                              selectedServices.remove('currency_exchange');
+                            } else {
+                              selectedServices.add('currency_exchange');
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // SEARCH BUTTON
+                  ElevatedButton(
+                    onPressed: () {
+                      // Call the api
+                      getNearestAtm();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: bmYellow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: loadingNearestAtm
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ))
+                        : const Text("Search", style: TextStyle(fontSize: 20)),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -137,7 +326,7 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // Floating action button to get the user's location
           FloatingActionButton(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: bmRed,
             onPressed: () {
               _getCurrentPosition();
             },
@@ -152,32 +341,6 @@ class _MapScreenState extends State<MapScreen> {
           ),
 
           const SizedBox(height: 10),
-
-          // Floating action button to get the route
-          FloatingActionButton(
-            backgroundColor: Colors.blueAccent,
-            onPressed: () => getCoordinates(),
-            child: const Icon(
-              Icons.route,
-              color: Colors.white,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Floating action button to get nearest ATM
-          FloatingActionButton(
-            backgroundColor: Colors.blueAccent,
-            onPressed: () => getNearestAtm(),
-            child: loadingNearestAtm
-                ? const CircularProgressIndicator(
-                    color: Colors.white,
-                  )
-                : const Icon(
-                    Icons.atm,
-                    color: Colors.white,
-                  ),
-          ),
         ],
       ),
     );
@@ -234,12 +397,34 @@ class _MapScreenState extends State<MapScreen> {
 
   var loadingNearestAtm = false;
   getNearestAtm() async {
+    // Check if the user has selected a service
+    if (selectedServices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please select a service to search for'),
+          backgroundColor: Color(0xff2e2e2e)));
+      return;
+    }
+
     // construct an array of atm lats and long in this format: [[lat1, long1], [lat2, long2], ...]
-    List<dynamic> atmLocations = MyApp.allAtms ?? [];
+    List<dynamic> atmLocations = selectedServices.contains("currency_exchange")
+        ? MyApp.exAtms!
+        : selectedServices.contains("deposit")
+            ? MyApp.depAtms!
+            : MyApp.allAtms!;
+
     List<dynamic> userLoc = [
       [_currentPosition!.longitude, _currentPosition!.latitude]
     ];
-    var locs = atmLocations.sublist(2294, 2402);
+
+    // DEPOSIT [450->805]
+    //  CURRENCY EXCHANGE [393->743]
+    // var locs = atmLocations.sublist(2294, 2402);
+    var locs = selectedServices.contains("currency_exchange")
+        ? atmLocations.sublist(392, 744)
+        : selectedServices.contains("deposit")
+            ? atmLocations.sublist(451, 806)
+            : atmLocations.sublist(2294, 2402);
+
     print(locs);
     print(locs[1]);
 
@@ -349,7 +534,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Icon(
                     Icons.location_on,
-                    color: Colors.red[900],
+                    color: bmRed,
                     size: 45,
                   ),
 
@@ -379,7 +564,7 @@ class _MapScreenState extends State<MapScreen> {
                                 children: [
                                   Icon(
                                     Icons.location_on,
-                                    color: Colors.red[900],
+                                    color: bmRed,
                                     size: 15,
                                   ),
                                   const SizedBox(width: 5),
@@ -397,7 +582,7 @@ class _MapScreenState extends State<MapScreen> {
                                 children: [
                                   Icon(
                                     Icons.timer,
-                                    color: Colors.red[900],
+                                    color: bmRed,
                                     size: 15,
                                   ),
                                   const SizedBox(width: 5),
@@ -424,6 +609,13 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
     }
+
+    // Move the map so that it contains all the 5 markers
+    mapController.fitBounds(
+        LatLngBounds.fromPoints(myMarkers.map((e) => e.point).toList()),
+        options: FitBoundsOptions(
+          padding: EdgeInsets.all(50),
+        ));
 
     // Add the markers to the map
     setState(() {

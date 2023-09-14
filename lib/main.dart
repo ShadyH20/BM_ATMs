@@ -5,10 +5,10 @@ import 'package:routesapp/map_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  var res = await loadCsv();
-  print(res.length);
-  print(res);
-  MyApp.allAtms = res;
+  var res = await loadCsvs();
+  MyApp.allAtms = res[0];
+  MyApp.depAtms = res[1];
+  MyApp.exAtms = res[2];
   runApp(const MyApp());
 }
 
@@ -16,6 +16,8 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   static List<dynamic>? allAtms;
+  static List<dynamic>? depAtms;
+  static List<dynamic>? exAtms;
 
   static dynamic keys = {
     "Id": 0,
@@ -45,8 +47,16 @@ class MyApp extends StatelessWidget {
 }
 
 // method to load csv to list
-Future<List<List<dynamic>>> loadCsv() async {
+loadCsvs() async {
   final myData = await rootBundle.loadString("assets/all_atms_processed.csv");
+  final myDataDep =
+      await rootBundle.loadString("assets/all_atms_processed_deposit.csv");
+  final myDataEx =
+      await rootBundle.loadString("assets/all_atms_processed_exchange.csv");
   List<List<dynamic>> csvTable = const CsvToListConverter().convert(myData);
-  return csvTable;
+  List<List<dynamic>> csvTableDep =
+      const CsvToListConverter().convert(myDataDep);
+  List<List<dynamic>> csvTableEx = const CsvToListConverter().convert(myDataEx);
+
+  return [csvTable, csvTableDep, csvTableEx];
 }
